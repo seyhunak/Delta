@@ -113,14 +113,10 @@ Goal:
 Research and prepare a short comparison of the top 3 task-management tools for small engineering teams, focusing on pricing, integrations, and learning curve.
 ```
 
-![Test 1](assets/tests/grok/grok_1.png)
-
 This prompt worked by chaining task-agent simulations.
 Each message built on the previous one using the exact Δ(format) pattern you defined:
 
 Baseline + Δ(role | constraints) → forced consistent style/behavior per step and main goal.
-
-![Test 2](assets/tests/grok/grok_2.png)
 
 Result: Illusion of persistent autonomous agent progressing a goal across turns, while actually being stateless per real interaction.
 
