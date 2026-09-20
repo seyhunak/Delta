@@ -1,6 +1,6 @@
 # Delta
 
-![Delta Banner](assets/logo/delta_large.png)
+<img src="assets/logo/delta_large.png" alt="Delta Banner" width="873">
 
 [![Developed at Crafted](https://img.shields.io/badge/Developed%20at-Crafted-black.svg?style=flat-square)](https://we-crafted.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE.md)
