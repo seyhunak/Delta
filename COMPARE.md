@@ -1,4 +1,4 @@
-# Side-by-Side Comparison: Naive Agent vs ΔAgent
+# Side-by-Side Comparison: Naive Agent vs Delta Agent
 
 ## Task
 
@@ -17,7 +17,7 @@ Research and compare the top 3 open-source vector databases for production use.
 
 ---
 
-## ΔAgent Prompt
+## Delta Agent Prompt
 
 ```
 Baseline: autonomous, reliable, minimal verbosity, no unnecessary tool use.
@@ -43,7 +43,7 @@ Output:
 
 ## Behavioral Comparison
 
-| Dimension          | Naive Agent        | ΔAgent               |
+| Dimension          | Naive Agent        | Delta Agent               |
 | ------------------ | ------------------ | -------------------- |
 | Planning           | Implicit or absent | Explicit, structured |
 | Tool use           | Immediate search   | Planned, justified   |
@@ -55,20 +55,20 @@ Output:
 
 ## Token Usage (Simulated)
 
-| Phase           | Naive    | ΔAgent   |
-| --------------- | -------- | -------- |
-| Prompt          | 92       | 54       |
-| Planning        | 0        | 48       |
-| Final synthesis | 280      | 190      |
-| **Total**       | **~992** | **~702** |
+| Phase           | Naive    | Delta Agent |
+| --------------- | -------- | ----------- |
+| Prompt          | 92       | 54          |
+| Planning        | 0        | 48          |
+| Final synthesis | 280      | 190         |
+| **Total**       | **372**  | **292**     |
 
-**ΔAgent token reduction:** ~29%
+**Delta Agent token reduction:** ~22% (illustrative figures)
 
 ---
 
 ## Quality Outcome (Blind Evaluation)
 
-| Criterion       | Naive | ΔAgent |
+| Criterion       | Naive | Delta Agent |
 | --------------- | ----- | ------ |
 | Accuracy        | 3.9   | 4.4    |
 | Clarity         | 3.7   | 4.5    |
@@ -80,7 +80,7 @@ Output:
 ## Key Insight
 
 Naive agents optimize for *completion*.
-ΔAgents optimize for *controlled progress*.
+Delta Agents optimize for *controlled progress*.
 
 The improvement comes not from more intelligence, but from **difference-based instruction alignment**.
 
@@ -88,11 +88,11 @@ The improvement comes not from more intelligence, but from **difference-based in
 
 ## Verdict
 
-ΔAgent prompting yields:
+Delta Agent prompting yields:
 
 * better planning
 * structured use
 * lower hallucination rate
 * higher user trust
 
-…at targeting to lower total token cost.
+…at lower total token cost.

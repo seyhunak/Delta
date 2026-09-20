@@ -1,0 +1,11 @@
+# ---> Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# ---> Session/config scratch files
+/tmp/

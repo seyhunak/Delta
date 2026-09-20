@@ -13,7 +13,6 @@ class TavilyClient:
 
     async def search(self, query: str, max_results: int = 5) -> list[dict[str, str]]:
         payload = {
-            "api_key": self.api_key,
             "query": query,
             "search_depth": "basic",
             "max_results": max(1, min(max_results, 10)),

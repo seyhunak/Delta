@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any
 
 
+MAX_HISTORY_ENTRIES = 50
+
+
 @dataclass
 class SessionState:
     baseline: str = ""
@@ -34,6 +37,7 @@ class SessionStore:
         )
 
     def save(self, state: SessionState) -> None:
+        state.history = state.history[-MAX_HISTORY_ENTRIES:]
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.path.write_text(
             json.dumps(asdict(state), indent=2, ensure_ascii=False),

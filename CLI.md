@@ -1,6 +1,6 @@
-# DeltaPrompt CLI (`dp`)
+# Delta CLI (`dp`)
 
-This document covers the CLI workflow, commands, and examples for the DeltaPrompt tool.
+This document covers the CLI workflow, commands, and examples for the Delta tool.
 
 Back to main docs: [README.md](README.md)
 
@@ -87,7 +87,8 @@ Supported providers:
 
 * `openai` (requires `OPENAI_API_KEY`)
 * `anthropic` (requires `ANTHROPIC_API_KEY`)
-* `ollama` (requires local Ollama at `localhost:11434`)
+* `ollama` (requires local Ollama at `localhost:11434` or `OLLAMA_HOST`)
+* Session history is capped at the 50 most recent entries.
 
 Web search provider:
 
@@ -145,8 +146,14 @@ Execute the current session with selected provider/model.
 ```bash
 dp run
 dp run --provider ollama --model llama3.2:3b
+dp run --stream
+dp run --temperature 0.7 --max-tokens 1024
 dp run --web-search --search-query "latest python retry best practices" --search-results 5
 ```
+
+Sampling defaults are `temperature 0.2` and the provider default for max tokens
+(Anthropic: 2048). If Ollama falls back to a different installed model, the run
+warns and reports the model actually used.
 
 Output features:
 
@@ -176,8 +183,10 @@ Benchmark output includes:
 
 * per-provider latency
 * prompt/output/total token estimates
-* output comparison score table
+* output comparison score table (the reference provider is marked `— (ref)`, not scored)
 * rendered output for each provider
+
+`dp benchmark` also accepts `--temperature` and `--max-tokens`, applied to every provider.
 
 ### `dp doctor`
 
@@ -227,7 +236,7 @@ dp run
 
 ### `dp run` appears stuck
 
-`dp run` is non-streaming for provider calls, so output appears when complete. Progress spinner indicates active execution.
+`dp run` is non-streaming by default, so output appears when complete. Progress spinner indicates active execution. Use `dp run --stream` to print tokens live.
 
 ### Ollama 404 / model not found
 

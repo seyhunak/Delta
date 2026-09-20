@@ -12,21 +12,22 @@ from rich.rule import Rule
 from rich.table import Table
 
 from dp.benchmark import LexicalOverlapScorer, estimate_tokens, run_single_benchmark
-from dp.config import ConfigStore, get_settings
+from dp.config import ConfigStore, Settings, get_settings
 from dp.providers import (
     KNOWN_PROVIDERS,
     SUPPORTED_PROVIDERS,
+    ProviderStatus,
     default_model_for,
     detect_providers,
     provider_factory,
     select_provider,
 )
-from dp.providers.base import ProviderError
+from dp.providers.base import DEFAULT_TEMPERATURE, ProviderError
 from dp.session import SessionStore, now_iso
 from dp.tools.tavily import TavilyClient, build_web_context_block
 
 console = Console()
-app = typer.Typer(help="DeltaPrompt CLI")
+app = typer.Typer(help="Delta CLI")
 baseline_app = typer.Typer(help="Manage baseline prompt")
 delta_app = typer.Typer(help="Manage deltas")
 goal_app = typer.Typer(help="Manage goal")
@@ -107,6 +108,7 @@ def render_pretty_response(
     output: str,
     web_sources: int = 0,
     border_style: str = "green",
+    include_output: bool = True,
 ) -> None:
     summary = Table(show_header=False, box=None, pad_edge=False)
     summary.add_column("k", style="cyan", no_wrap=True)
@@ -120,6 +122,9 @@ def render_pretty_response(
     summary.add_row("Web sources", str(web_sources))
     summary.add_row("Chars", str(len(output)))
     console.print(Panel(summary, title="Run Summary", border_style="cyan"))
+    if not include_output:
+        console.print(Rule(style="dim"))
+        return
     console.print(
         Panel.fit(
             Markdown(_normalize_markdown(output), code_theme="monokai", hyperlinks=True),
@@ -200,23 +205,26 @@ def set_all(
     console.print(table)
 
 
+async def _detect_and_suggest(
+    settings: Settings,
+    preferred: str | None,
+) -> tuple[dict[str, ProviderStatus], str]:
+    statuses = await detect_providers()
+    try:
+        suggested = await select_provider(None, settings, preferred=preferred)
+    except ProviderError:
+        suggested = "ollama"
+    return statuses, suggested
+
+
 @app.command("setup")
 def setup() -> None:
     settings = get_settings()
     config_store = ConfigStore(settings.config_path)
     config = config_store.load()
-    statuses = asyncio.run(detect_providers())
-
-    try:
-        suggested_provider = asyncio.run(
-            select_provider(
-                None,
-                settings,
-                preferred=config.default_provider,
-            )
-        )
-    except ProviderError:
-        suggested_provider = "ollama"
+    statuses, suggested_provider = asyncio.run(
+        _detect_and_suggest(settings, preferred=config.default_provider)
+    )
 
     available = [p for p in SUPPORTED_PROVIDERS if statuses.get(p) and statuses[p].available]
     if available:
@@ -280,7 +288,7 @@ def show() -> None:
     state = store.load()
     config = get_config_store().load()
 
-    table = Table(title="DeltaPrompt Session")
+    table = Table(title="Delta Session")
     table.add_column("Field", style="cyan")
     table.add_column("Value", style="white")
     table.add_row("Baseline", state.baseline or "<empty>")
@@ -315,12 +323,21 @@ async def _run(
     web_search: bool | None,
     search_query: str | None,
     search_results: int | None,
+    temperature: float | None,
+    max_tokens: int | None,
+    stream: bool,
 ) -> None:
     settings = get_settings()
     store = SessionStore(settings.session_path)
     config = ConfigStore(settings.config_path).load()
     state = store.load()
     ensure_prompt_inputs(state.baseline, state.goal)
+
+    resolved_temperature = DEFAULT_TEMPERATURE if temperature is None else temperature
+    if resolved_temperature < 0:
+        raise typer.BadParameter("Temperature must be >= 0.")
+    if max_tokens is not None and max_tokens < 1:
+        raise typer.BadParameter("Max tokens must be >= 1.")
 
     selected_provider = await select_provider(provider, settings, preferred=config.default_provider)
     selected_model = model or config.models.get(selected_provider) or default_model_for(selected_provider, settings)
@@ -356,12 +373,37 @@ async def _run(
     try:
         runner = provider_factory(selected_provider)
         started = time.perf_counter()
-        with console.status(
-            f"[bold cyan]Running[/bold cyan] provider={selected_provider} model={selected_model}",
-            spinner="dots",
-        ):
-            output = await runner.generate(messages=messages, model=selected_model)
+        if stream:
+            console.print(f"[dim]Streaming provider={selected_provider} model={selected_model}[/dim]")
+            chunks: list[str] = []
+            async for chunk in runner.generate_stream(
+                messages=messages,
+                model=selected_model,
+                temperature=resolved_temperature,
+                max_tokens=max_tokens,
+            ):
+                chunks.append(chunk)
+                print(chunk, end="", flush=True)
+            print(flush=True)
+            output = "".join(chunks)
+        else:
+            with console.status(
+                f"[bold cyan]Running[/bold cyan] provider={selected_provider} model={selected_model}",
+                spinner="dots",
+            ):
+                output = await runner.generate(
+                    messages=messages,
+                    model=selected_model,
+                    temperature=resolved_temperature,
+                    max_tokens=max_tokens,
+                )
         elapsed = time.perf_counter() - started
+        used_model = runner.resolved_model or selected_model
+        if used_model != selected_model:
+            console.print(
+                f"[yellow]Requested model '{selected_model}' unavailable; "
+                f"used '{used_model}'.[/yellow]"
+            )
         output_tokens = estimate_tokens(output)
     except ProviderError as exc:
         state.history.append(
@@ -379,7 +421,8 @@ async def _run(
         {
             "timestamp": now_iso(),
             "provider": selected_provider,
-            "model": selected_model,
+            "model": used_model,
+            "temperature": resolved_temperature,
             "prompt": messages,
             "output": output,
         }
@@ -387,15 +430,16 @@ async def _run(
     store.save(state)
 
     render_pretty_response(
-        title=f"Run Result [{selected_provider}:{selected_model}]",
+        title=f"Run Result [{selected_provider}:{used_model}]",
         provider=selected_provider,
-        model=selected_model,
+        model=used_model,
         elapsed_s=elapsed,
         prompt_tokens=prompt_tokens,
         output_tokens=output_tokens,
         output=output,
         web_sources=len(web_result_items),
         border_style="green",
+        include_output=not stream,
     )
 
 
@@ -419,8 +463,20 @@ def run(
     ] = None,
     search_results: Annotated[
         int | None,
-        typer.Option("--search-results", help="Tavily max results (1-10)."),
+        typer.Option("--search-results", help="Tavily max results (1-10).", min=1, max=10),
     ] = None,
+    temperature: Annotated[
+        float | None,
+        typer.Option("--temperature", help="Sampling temperature (default: 0.2).", min=0.0, max=2.0),
+    ] = None,
+    max_tokens: Annotated[
+        int | None,
+        typer.Option("--max-tokens", help="Max output tokens (provider default if omitted).", min=1),
+    ] = None,
+    stream: Annotated[
+        bool,
+        typer.Option("--stream/--no-stream", help="Stream output tokens live."),
+    ] = False,
 ) -> None:
     try:
         asyncio.run(
@@ -430,6 +486,9 @@ def run(
                 web_search=web_search,
                 search_query=search_query,
                 search_results=search_results,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=stream,
             )
         )
     except ProviderError as exc:
@@ -471,12 +530,20 @@ async def _benchmark(
     web_search: bool | None,
     search_query: str | None,
     search_results: int | None,
+    temperature: float | None,
+    max_tokens: int | None,
 ) -> None:
     settings = get_settings()
     store = SessionStore(settings.session_path)
     config = ConfigStore(settings.config_path).load()
     state = store.load()
     ensure_prompt_inputs(state.baseline, state.goal)
+
+    resolved_temperature = DEFAULT_TEMPERATURE if temperature is None else temperature
+    if resolved_temperature < 0:
+        raise typer.BadParameter("Temperature must be >= 0.")
+    if max_tokens is not None and max_tokens < 1:
+        raise typer.BadParameter("Max tokens must be >= 1.")
 
     requested = [p.lower() for p in providers] if providers else list(SUPPORTED_PROVIDERS)
     statuses = await detect_providers()
@@ -528,7 +595,11 @@ async def _benchmark(
                     provider=provider_client,
                     model=chosen_model,
                     messages=messages,
+                    temperature=resolved_temperature,
+                    max_tokens=max_tokens,
                 )
+                if provider_client.resolved_model:
+                    result.model = provider_client.resolved_model
             elapsed = time.perf_counter() - started
             console.print(f"[dim]{name} completed in {elapsed:.2f}s[/dim]")
             results.append(result)
@@ -564,8 +635,11 @@ async def _benchmark(
     compare.add_column("Score", justify="right")
 
     for result in results:
-        score = scorer.score(reference.output, result.output)
-        compare.add_row(result.provider, f"{score:.3f}")
+        if result.provider == reference.provider:
+            compare.add_row(result.provider, "— (ref)")
+        else:
+            score = scorer.score(reference.output, result.output)
+            compare.add_row(result.provider, f"{score:.3f}")
     console.print(compare)
 
     for result in results:
@@ -606,7 +680,15 @@ def benchmark(
     ] = None,
     search_results: Annotated[
         int | None,
-        typer.Option("--search-results", help="Tavily max results (1-10)."),
+        typer.Option("--search-results", help="Tavily max results (1-10).", min=1, max=10),
+    ] = None,
+    temperature: Annotated[
+        float | None,
+        typer.Option("--temperature", help="Sampling temperature (default: 0.2).", min=0.0, max=2.0),
+    ] = None,
+    max_tokens: Annotated[
+        int | None,
+        typer.Option("--max-tokens", help="Max output tokens (provider default if omitted).", min=1),
     ] = None,
 ) -> None:
     selected = (providers_opt or []) + (providers or [])
@@ -617,6 +699,8 @@ def benchmark(
             web_search=web_search,
             search_query=search_query,
             search_results=search_results,
+            temperature=temperature,
+            max_tokens=max_tokens,
         )
     )
 

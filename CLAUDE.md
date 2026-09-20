@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Two coupled deliverables:
 
-1. **The ΔPrompt methodology** — a prompting technique documented in the root-level markdown files. `README.md` is the entry point and its *Navigation* section links every other doc: `BASELINE.md` (baseline vocabulary), `EXAMPLES.md`, `COMPARE.md`, `DELTA_VS_NAIVE.md`, `BENCHMARK.md`, `CLI.md`, `SKILL.md`.
+1. **The Delta methodology** — a prompting technique documented in the root-level markdown files. `README.md` is the entry point and its *Navigation* section links every other doc: `BASELINE.md` (baseline vocabulary), `EXAMPLES.md`, `COMPARE.md`, `DELTA_VS_NAIVE.md`, `BENCHMARK.md`, `CLI.md`, `SKILL.md`, `FAILURES.md` (failure case studies).
 2. **The `dp` CLI** (`dp/` package, distribution `deltaprompt-cli`, version `0.1.0` in both `pyproject.toml` and `dp/__init__.py`) — the reference implementation. A persisted session holds `baseline` + an ordered list of `deltas` + `goal`; `dp run` composes those into a single prompt and executes it against a provider.
 
 The docs are a first-class artifact here, not an afterthought — the repo exists to publish the technique. Treat doc/code drift as a bug (see *Doc–code coupling* below).
@@ -32,16 +32,21 @@ dp show                            # session + config summary
 dp reset                           # wipe session (baseline, deltas, goal, history)
 
 dp run [--provider openai|anthropic|ollama] [--model M]
+       [--temperature T] [--max-tokens N] [--stream/--no-stream]
        [--web-search/--no-web-search] [--search-query Q] [--search-results N]
 dp benchmark [--providers openai --providers anthropic | openai anthropic ollama]
-             [--model M] [--web-search] ...
+             [--model M] [--temperature T] [--max-tokens N] [--web-search] ...
 ```
 
 `dp set` **replaces** deltas by default; `-a` appends. `dp benchmark` accepts providers as either repeated `--providers` flags or bare positional args (both lists are concatenated).
 
-### Verification (there is no test suite)
+### Verification
 
-**No pytest, no linter, no formatter, no type checker, no CI.** Nothing in `pyproject.toml` beyond runtime deps (`typer`, `rich`, `httpx`) and the `dp` entry point. Verify changes by exercising the CLI:
+Tests live in `tests/` (pytest, `pip install -e ".[test]"`). Conventions: one
+file per module area (`test_compose.py`, `test_benchmark.py`, `test_session.py`,
+`test_providers.py`); network-free — providers are tested via pure helpers
+(`_build_prompt`, `resolve_base_url`) and a fake `LLMProvider`, never live APIs.
+Run `pytest -q` before committing. No linter, formatter, or type checker yet.
 
 ```bash
 DP_SESSION_PATH=/tmp/dp-session.json DP_CONFIG_PATH=/tmp/dp-config.json dp show
@@ -49,7 +54,7 @@ DP_SESSION_PATH=/tmp/dp-session.json DP_CONFIG_PATH=/tmp/dp-config.json dp show
 
 Always point `DP_SESSION_PATH`/`DP_CONFIG_PATH` at throwaway files when testing — otherwise you clobber the user's real `~/.deltaprompt/` state, and both stores silently create-and-overwrite. Ollama is the only provider needing no API key (local daemon on `localhost:11434`); if none is available, `select_provider` still returns `"ollama"` and the run fails at request time with a `ProviderError`.
 
-If you add tests, there is no existing convention to follow — pick one and record it here.
+If you add tests, follow the existing convention (one file per module area under `tests/`, network-free).
 
 ## Architecture
 
@@ -78,13 +83,13 @@ Lives in `dp/cli.py:47-80`. Everything else is plumbing around it.
 | `dp/providers/{openai,anthropic,ollama}.py` | One `LLMProvider` implementation each, raw `httpx` against the vendor HTTP API. |
 | `dp/providers/base.py` | `LLMProvider` ABC (single async `generate(messages, model) -> str`) and `ProviderError`. |
 | `dp/config.py` | `Settings` (env, frozen) + `UserConfig`/`ConfigStore` (JSON file). |
-| `dp/session.py` | `SessionState` + `SessionStore` (JSON file), `now_iso()`. |
-| `dp/benchmark.py` | `BenchmarkResult`, token estimation, `LexicalOverlapScorer`, `run_single_benchmark`. |
+| `dp/session.py` | `SessionState` + `SessionStore` (JSON file, history capped at 50), `now_iso()`. |
+| `dp/benchmark.py` | `BenchmarkResult`, token estimation, `LexicalOverlapScorer`, `delta_compression_ratio`, `run_single_benchmark`. |
 | `dp/tools/tavily.py` | Optional web-context enrichment. |
 
 ### Async pattern
 
-Every async command is a thin sync Typer wrapper around a private coroutine driven by `asyncio.run`: `run`→`_run`, `benchmark`→`_benchmark`, `doctor`→`_doctor`. `setup` calls `asyncio.run` twice inline. Follow this shape for new commands — Typer sees only sync functions.
+Every async command is a thin sync Typer wrapper around a private coroutine driven by `asyncio.run`: `run`→`_run`, `benchmark`→`_benchmark`, `doctor`→`_doctor`. `setup` resolves detection + suggestion in a single `asyncio.run` via `_detect_and_suggest()`. Follow this shape for new commands — Typer sees only sync functions.
 
 ### Providers
 
@@ -98,9 +103,9 @@ Every async command is a thin sync Typer wrapper around a private coroutine driv
 
 Provider-specific quirks worth knowing:
 
-- **Anthropic** flattens the system message out of `messages` into the top-level `system` field, hardcodes `max_tokens: 2048` and `temperature: 0.2`, pins `anthropic-version: 2023-06-01`, and concatenates all `type == "text"` content blocks.
-- **OpenAI** posts `messages` through unchanged to `/v1/chat/completions` with `temperature: 0.2`.
-- **Ollama** does *not* use the chat endpoint. `_build_prompt()` flattens messages into `"ROLE: content"` blocks joined by blank lines and posts to `/api/generate` with `stream: False`. On a 404 whose body says "not found", it **silently retries with the first locally installed model** — so the model reported in the run summary can differ from the model actually used. If no models are installed it raises a `ProviderError` telling the user to `ollama pull`. Timeout is 120s (vs 60s for hosted providers).
+- **Anthropic** flattens the system message out of `messages` into the top-level `system` field, defaults `max_tokens: 2048` (overridable via `--max-tokens`) and `temperature: 0.2` (overridable via `--temperature`), pins `anthropic-version: 2023-06-01`, and concatenates all `type == "text"` content blocks. Streaming parses `content_block_delta` SSE events.
+- **OpenAI** posts `messages` through unchanged to `/v1/chat/completions` with `temperature: 0.2` default; `max_tokens` is sent only when set. Streaming parses `choices[0].delta.content` SSE chunks until `[DONE]`.
+- **Ollama** does *not* use the chat endpoint. `_build_prompt()` flattens messages into `"ROLE: content"` blocks joined by blank lines and posts to `/api/generate` with `stream: False`. Before generating it resolves the model against `/api/tags` (exact match, then base-name match, then first installed model) and records the outcome in `resolved_model` — the CLI warns and reports the actually-used model when it differs. If no models are installed it raises a `ProviderError` telling the user to `ollama pull`. Base URL comes from `OLLAMA_HOST` (default `http://localhost:11434`). Timeout is 120s (vs 60s for hosted providers).
 
 ### Config vs session — two different concepts
 
@@ -108,7 +113,7 @@ Provider-specific quirks worth knowing:
 - **`UserConfig`** is the mutable JSON at `~/.deltaprompt/config.json`, written by `dp setup`: `default_provider`, per-provider `models`, `preferences` (injected into the system message), `web_search_enabled`, `web_search_max_results`.
 - **`SessionState`** is the JSON at `~/.deltaprompt/session.json`: `baseline`, `deltas`, `goal`, and an ever-growing `history`.
 
-Both stores auto-create their file with defaults on the first `load()` and write with `indent=2, ensure_ascii=False`. **`history` is never trimmed** — it accumulates full prompts and outputs forever, so the session file grows unbounded. `ConfigStore.update()` and `config_summary()` are both dead code — nothing calls them (`dp setup` mutates the `UserConfig` and saves directly).
+Both stores auto-create their file with defaults on the first `load()` and write with `indent=2, ensure_ascii=False`. **`history` is capped at the 50 most recent entries** on every `save()` (`MAX_HISTORY_ENTRIES` in `dp/session.py`).
 
 ### Model resolution
 
@@ -118,11 +123,11 @@ Per run: `--model` flag → `UserConfig.models[provider]` → `default_model_for
 
 `run_single_benchmark` runs providers **sequentially, not concurrently** (a `for` loop with `await`), so latency numbers are not contended but wall-clock is the sum. Unavailable or unsupported providers are skipped with a warning; a provider that errors mid-run is reported and dropped. Zero results → exit code 1.
 
-`LexicalOverlapScorer` is a bag-of-words set-intersection ratio scored against `results[0]` — **the first *successful* provider, which depends on ordering**, so the reference is whatever survived first, and it always scores 1.000 against itself. `estimate_tokens()` is `max(1, len(text) // 4)` — a crude heuristic, not a tokenizer, which is why every count in the UI is labeled `(est.)`. Don't present these numbers as measurements.
+`LexicalOverlapScorer` is a bag-of-words set-intersection ratio scored against `results[0]` — **the first *successful* provider, which depends on ordering**, so the reference is whatever survived first, and it always scores 1.000 against itself. The comparison table marks the reference `— (ref)` instead of printing that trivial score. `estimate_tokens()` is `max(1, len(text) // 4)` — a crude heuristic, not a tokenizer, which is why every count in the UI is labeled `(est.)`. Don't present these numbers as measurements.
 
 ### Web context (Tavily)
 
-Active only when a Tavily key is present **and** web search is on (`config.web_search_enabled`, overridable per-run by `--web-search/--no-web-search`). The query defaults to the goal text, overridable with `--search-query`; results are clamped to 1–10 in three separate places. `build_web_context_block()` renders a numbered `Web Context (Tavily):` block of title/URL/snippet. Failures are **non-fatal** — the run prints a yellow warning and continues without context. A missing key when search is requested is likewise a warning, not an error. `TavilyClient` sends the key both in the JSON payload and as a Bearer header.
+Active only when a Tavily key is present **and** web search is on (`config.web_search_enabled`, overridable per-run by `--web-search/--no-web-search`). The query defaults to the goal text, overridable with `--search-query`; results are clamped to 1–10 in three separate places. `build_web_context_block()` renders a numbered `Web Context (Tavily):` block of title/URL/snippet. Failures are **non-fatal** — the run prints a yellow warning and continues without context. A missing key when search is requested is likewise a warning, not an error. `TavilyClient` sends the key as a Bearer header.
 
 ### Error handling convention
 
@@ -134,10 +139,9 @@ All terminal output goes through a module-level `rich.Console` in `dp/cli.py`. L
 
 ## Doc–code coupling
 
-- **`SKILL.md` and `.claude/skills/SKILL.md` are byte-identical duplicates.** The root copy is what users `curl` from GitHub (the install snippet inside it points at `raw.githubusercontent.com/seyhunak/Delta_Prompt/main/SKILL.md`); the `.claude/` copy is what Claude Code loads locally. **Edit both or they drift.**
+- **`SKILL.md` and `.claude/skills/SKILL.md` are byte-identical duplicates.** The root copy is what users `curl` from GitHub (the install snippet inside it points at `raw.githubusercontent.com/seyhunak/Delta/main/SKILL.md`); the `.claude/` copy is what Claude Code loads locally. **Edit both or they drift.**
 - Changing CLI flags or behavior means updating `CLI.md` (full command reference, provider-selection order, troubleshooting) and the command list in `SKILL.md`.
 - Adding a root-level doc means adding it to the *Navigation* list in `README.md`; `README.md` also carries an inline CLI capabilities summary and a "Last Updated" date at the bottom.
-- Known existing drift in `SKILL.md` — fix rather than propagate: it documents `dp "baseline" "goal" -d ...` (the `set` subcommand is missing) and lists `OLLAMA_HOST` as an environment variable, **which the code never reads** (`OllamaProvider` takes `base_url` as a constructor default of `http://localhost:11434` with no env override).
 
 ## Repo conventions
 
@@ -145,4 +149,5 @@ All terminal output goes through a module-level `rich.Console` in `dp/cli.py`. L
 - Dataclasses everywhere for state; frozen for anything immutable (`Settings`, `DefaultModels`, `ProviderStatus`, `BenchmarkResult` is mutable).
 - No vendor SDKs — `httpx.AsyncClient` per request, constructed inside the call and closed by `async with`.
 - Comments are essentially absent; the code is written to read without them. Match that.
-- There is **no `.gitignore`** — `.venv/` and `dp/__pycache__/` exist on disk untracked. Don't `git add -A` blindly.
+- Don't `git add -A` blindly — check `git status` first (`.venv/`, `__pycache__/`, and `*.egg-info/` are gitignored but scratch files may not be).
+- Test conventions: one file per module area under `tests/` (`test_compose.py`, `test_benchmark.py`, `test_session.py`, `test_providers.py`); network-free; run `pytest -q` before committing.

@@ -1,6 +1,6 @@
-# ΔPrompt — Sample Prompts
+# Delta — Sample Prompts
 
-This file contains **canonical examples** of ΔPrompt (Delta Prompting) across common task categories.
+This file contains **canonical examples** of Delta across common task categories.
 Each prompt encodes **only deviations from baseline behavior**, leveraging the model's existing capabilities to minimize instruction bloat.
 
 ---
@@ -14,7 +14,7 @@ Each prompt encodes **only deviations from baseline behavior**, leveraging the m
 - [📝 Content Summarization](#-content-summarization)
 - [🤖 AI Agent Task](#-ai-agent-task)
 - [🤝 Multi Step - Coordination Agent](#-multi-step---coordination-agent)
-- [🔁 Chaining ΔPrompts](#-chaining-δprompts)
+- [🔁 Chaining Deltas](#-chaining-deltas)
 - [⚓ Anchoring the Baseline](#-anchoring-the-baseline)
 
 ---
@@ -115,7 +115,7 @@ for small engineering teams, focusing on pricing, integrations, and learning cur
 ## 🤝 Multi Step - Coordination Agent
 
 **Scenario:**
-A product team evaluates a new "Metrics" feature for an Ads Platform. Three agents collaborate using ΔPrompt to maintain focus and efficiency.
+A product team evaluates a new "Metrics" feature for an Ads Platform. Three agents collaborate using Delta to maintain focus and efficiency.
 
 ### Shared Baseline (Declared Once)
 
@@ -144,9 +144,9 @@ Task: Recommend whether to proceed, noting tradeoffs and uncertainties.
 
 ---
 
-## 🔁 Chaining ΔPrompts
+## 🔁 Chaining Deltas
 
-ΔPrompts are **incrementally composable**. You can refine behavior over multiple turns without restating the entire baseline or previous deltas.
+Deltas are **incrementally composable**. You can refine behavior over multiple turns without restating the entire baseline or previous deltas.
 
 **Example Conversation Flow:**
 

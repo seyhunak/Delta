@@ -4,7 +4,7 @@ import time
 from dataclasses import dataclass
 from typing import Protocol
 
-from dp.providers.base import LLMProvider
+from dp.providers.base import DEFAULT_TEMPERATURE, LLMProvider
 
 
 @dataclass
@@ -38,16 +38,29 @@ def estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
 
 
+def delta_compression_ratio(naive_prompt: str, delta_prompt: str) -> float:
+    naive_tokens = estimate_tokens(naive_prompt)
+    delta_tokens = estimate_tokens(delta_prompt)
+    return naive_tokens / max(delta_tokens, 1)
+
+
 async def run_single_benchmark(
     provider_name: str,
     provider: LLMProvider,
     model: str,
     messages: list[dict[str, str]],
+    temperature: float = DEFAULT_TEMPERATURE,
+    max_tokens: int | None = None,
 ) -> BenchmarkResult:
     start = time.perf_counter()
     prompt_text = "\n".join(msg.get("content", "") for msg in messages)
     prompt_tokens = estimate_tokens(prompt_text)
-    output = await provider.generate(messages=messages, model=model)
+    output = await provider.generate(
+        messages=messages,
+        model=model,
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
     output_tokens = estimate_tokens(output)
     latency_ms = (time.perf_counter() - start) * 1000
 

@@ -1,6 +1,6 @@
-# Naive vs ΔPrompt — Side-by-Side Examples
+# Naive vs Delta — Side-by-Side Examples
 
-This file demonstrates how **ΔPrompt (Delta Prompt)** compresses instructions by encoding *only differences* from a model’s baseline behavior, compared to traditional naive prompting.
+This file demonstrates how **Delta** compresses instructions by encoding *only differences* from a model’s baseline behavior, compared to traditional naive prompting.
 
 Each section shows the **same task** prompted in two ways.
 
@@ -19,7 +19,7 @@ The story should be about a future where memories can be deleted,
 but one memory refuses to disappear.
 ```
 
-### ΔPrompt
+### Delta
 
 ```text
 Baseline: modern, coherent prose, neutral tone.
@@ -44,7 +44,7 @@ A train travels 60 km at 30 km/h and then 60 km at 60 km/h.
 What is the average speed for the entire trip?
 ```
 
-### ΔPrompt
+### Delta
 
 ```text
 Baseline: concise, correct, no explicit reasoning unless required.
@@ -70,7 +70,7 @@ Include simple test cases.
 Do not include unnecessary comments or explanations.
 ```
 
-### ΔPrompt
+### Delta
 
 ```text
 Baseline: idiomatic, readable Python, correct by default.
@@ -98,7 +98,7 @@ Make sure the information is accurate and cite sources.
 Finally, recommend the best option.
 ```
 
-### ΔPrompt
+### Delta
 
 ```text
 Baseline: autonomous, reliable, minimal verbosity, no tool use unless helpful.
@@ -128,7 +128,7 @@ Focus on pricing, integrations, and learning curve.
 Organize the information clearly and provide a recommendation.
 ```
 
-### ΔPrompt
+### Delta
 
 ```text
 Baseline: autonomous, goal-oriented, safe, minimal verbosity.
@@ -144,7 +144,7 @@ focusing on pricing, integrations, and learning curve.
 
 ## Summary Comparison
 
-| Aspect         | Naive Prompting | ΔPrompt |
+| Aspect         | Naive Prompting | Delta |
 | -------------- | --------------- | ---------- |
 | Prompt length  | Long            | Short      |
 | Redundancy     | High            | Minimal    |
@@ -157,6 +157,6 @@ focusing on pricing, integrations, and learning curve.
 ## Key Insight
 
 > **Naive prompts describe everything.
-> ΔPrompts describe only what changed.**
+> Delta prompts describe only what changed.**
 
 As models become more capable, **difference-based prompting scales better than instruction accumulation**.

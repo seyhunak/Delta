@@ -1,22 +1,22 @@
-# ΔPrompt (Delta Prompt)
+# Delta
 
-![ΔPrompt Banner](assets/logo/delta_large.png)
+![Delta Banner](assets/logo/delta_large.png)
 
 [![Developed at Crafted](https://img.shields.io/badge/Developed%20at-Crafted-black.svg?style=flat-square)](https://we-crafted.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?style=flat-square)
+![Version](https://img.shields.io/badge/version-0.1.0-blue.svg?style=flat-square)
 ![Prompt Engineering](https://img.shields.io/badge/Prompt-Engineering-blue.svg?style=flat-square)
 ![Optimized](https://img.shields.io/badge/Optimized-success?style=flat-square)
 ![Built for Agents](https://img.shields.io/badge/Built%20for-Agents-red?style=flat-square)
 
-**ΔPrompt** is a prompting technique for large language models (LLMs) designed by Crafted for our own internal work method, it encodes **only the difference (Δ)** between a model’s default behavior and the user’s desired behavior.
+**Delta** is a prompting technique for large language models (LLMs) designed by Crafted for our own internal work method, it encodes **only the difference (Δ)** between a model’s default behavior and the user’s desired behavior.
 
-Instead of restating full instructions, roles, or examples, ΔPrompt treats prompts as *corrections*—the way humans naturally communicate with capable collaborators.
+Instead of restating full instructions, roles, or examples, Delta treats prompts as *corrections*—the way humans naturally communicate with capable collaborators.
 
 Traditional prompting assumes the model starts as a blank slate, requiring exhaustive repetition of "best practices" that are already baked into modern LLM weights. This creates **Prompt Bloat** long, drowned instructions that increase token costs and slow down iteration.
 
-We need ΔPrompt because it allows us to interact with AI at the speed of thought, focusing only on the specific adjustments needed to reach the desired outcome and required structured approach to prompt engineering for all the team members.
+We need Delta because it allows us to interact with AI at the speed of thought, focusing only on the specific adjustments needed to reach the desired outcome and required structured approach to prompt engineering for all the team members.
 
 > **If the model is already competent, why over-explain?**
 
@@ -24,17 +24,17 @@ We need ΔPrompt because it allows us to interact with AI at the speed of though
 
 > *As models get smarter, prompts should get smaller.*
 
-ΔPrompt treats LLMs less like tools and more like collaborators—nudged, not micromanaged.
+Delta treats LLMs less like tools and more like collaborators—nudged, not micromanaged.
 
 ---
 
-## 📈 Why ΔPrompt Exists
+## 📈 Why Delta Exists
 
 Most benchmarks answer:
 
 > *Which model is better?*
 
-ΔPrompt answers:
+Delta answers:
 
 > **Which way of talking to models actually works better?**
 
@@ -44,13 +44,14 @@ As LLMs become more capable, *instruction efficiency* and *agent control* matter
 
 ## Navigation
 
-* [**Baselines**](BASELINE.md) — Baseline Behavior (B) for ΔPrompt
-* [**Examples**](EXAMPLES.md) — Real-world ΔPrompt patterns
-* [**Comparison**](COMPARE.md) — ΔPrompt vs. Traditional (Naive) methods
+* [**Baselines**](BASELINE.md) — Baseline Behavior (B) for Delta
+* [**Examples**](EXAMPLES.md) — Real-world Delta patterns
+* [**Comparison**](COMPARE.md) — Delta vs. Traditional (Naive) methods
 * [**Delta vs Naive**](DELTA_VS_NAIVE.md) — Deep dive into the methodology
 * [**Benchmarks**](BENCHMARK.md) — Evaluation and performance metrics
-* [**CLI Guide**](CLI.md) — DeltaPrompt CLI (`dp`) commands and usage
-* [**Skill**](SKILL.md) — Claude Code skill for ΔPrompt workflows
+* [**CLI Guide**](CLI.md) — Delta CLI (`dp`) commands and usage
+* [**Skill**](SKILL.md) — Claude Code skill for Delta workflows
+* [**Failures**](FAILURES.md) — Failure case studies and recovery patterns
 * [**Contributor Guide**](CLAUDE.md) — Repository architecture and conventions for AI coding agents
 
 ---
@@ -62,7 +63,7 @@ Let:
 * **B** = the model’s baseline behavior (implied by pretraining + context)
 * **O** = the desired output
 
-ΔPrompt specifies:
+Delta specifies:
 
 ```
 Δ = O − B
@@ -72,7 +73,7 @@ Only deviations from the baseline are written.
 
 ---
 
-## 🧠 Why ΔPrompt?
+## 🧠 Why Delta?
 
 Traditional prompting methods:
 
@@ -81,7 +82,7 @@ Traditional prompting methods:
 * increase iteration cost
 * fight the model’s priors
 
-ΔPrompt:
+Delta:
 
 * minimizes tokens
 * accelerates iteration
@@ -187,9 +188,9 @@ Compare top 3 open-source vector databases for production use.
 
 ---
 
-## 🔁 Chaining ΔPrompts
+## 🔁 Chaining Deltas
 
-ΔPrompts are **incrementally composable**:
+Deltas are **incrementally composable**:
 
 ```text
 Δ(shorter)
@@ -209,7 +210,7 @@ When baseline assumptions may differ, use a **one-time anchor**:
 Baseline: concise, technical, neutral, no emojis.
 ```
 
-After anchoring, continue using ΔPrompts freely.
+After anchoring, continue using Deltas freely.
 
 ---
 
@@ -221,11 +222,11 @@ After anchoring, continue using ΔPrompts freely.
 | Missing constraint    | Over-compression  | Add targeted delta |
 | Drift over long chats | Context erosion   | Re-anchor briefly  |
 
-ΔPrompt favors *precision over completeness*.
+Delta favors *precision over completeness*.
 
 ---
 
-## 🧪 When ΔPrompt Works Best
+## 🧪 When Delta Works Best
 
 ✅ Standard workflows
 
@@ -249,20 +250,20 @@ Less ideal for:
 
 ## 🔬 Relation to Other Techniques
 
-| Technique        | How ΔPrompt Differs               |
+| Technique        | How Delta Differs               |
 | ---------------- | ------------------------------------ |
 | Role prompting   | Replaces roles with behavior deltas  |
 | Few-shot         | Uses priors instead of examples      |
 | Chain-of-thought | Activates reasoning only when needed |
-| System prompts   | ΔPrompt operates *within* them    |
+| System prompts   | Delta operates *within* them    |
 
-ΔPrompt is **orthogonal and composable** with all of the above.
+Delta is **orthogonal and composable** with all of the above.
 
 ---
 
-## 🖥️ DeltaPrompt CLI
+## 🖥️ Delta CLI
 
-DeltaPrompt includes an agent-focused CLI tool, `dp`, for baseline + delta + goal workflows with multi-provider execution.
+Delta includes an agent-focused CLI tool, `dp`, for baseline + delta + goal workflows with multi-provider execution.
 
 ### Key capabilities
 
@@ -298,8 +299,8 @@ For full command reference and examples, see [CLI.md](CLI.md).
 ## 📄 Citation (Draft)
 
 ```bibtex
-@misc{deltaprompt2026,
-  title={ΔPrompt: Difference-Based Prompting for Large Language Models},
+@misc{delta2026,
+  title={Delta: Difference-Based Prompting for Large Language Models},
   author={Seyhun Akyurek},
   year={2026}
 }
@@ -311,7 +312,7 @@ For full command reference and examples, see [CLI.md](CLI.md).
 
 Ideas welcome:
 
-* Real-world ΔPrompt patterns
+* Real-world Delta patterns
 * Failure case studies
 * Agent-specific extensions
 * Empirical evaluations
@@ -331,4 +332,4 @@ Copyright (c) 2026 Seyhun Akyurek
 
 ---
 
-**Last Updated:** August 2, 2026
+**Last Updated:** September 20, 2026

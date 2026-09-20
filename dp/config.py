@@ -4,7 +4,6 @@ import json
 import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any
 
 
 @dataclass(frozen=True)
@@ -80,36 +79,3 @@ class ConfigStore:
             json.dumps(asdict(config), indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
-
-    def update(
-        self,
-        *,
-        default_provider: str | None = None,
-        model: str | None = None,
-        preferences: list[str] | None = None,
-        web_search_enabled: bool | None = None,
-        web_search_max_results: int | None = None,
-    ) -> UserConfig:
-        config = self.load()
-        if default_provider is not None:
-            config.default_provider = default_provider
-        if model is not None and config.default_provider:
-            config.models[config.default_provider] = model
-        if preferences is not None:
-            config.preferences = preferences
-        if web_search_enabled is not None:
-            config.web_search_enabled = web_search_enabled
-        if web_search_max_results is not None:
-            config.web_search_max_results = max(1, min(web_search_max_results, 10))
-        self.save(config)
-        return config
-
-
-def config_summary(config: UserConfig) -> dict[str, Any]:
-    return {
-        "default_provider": config.default_provider or "",
-        "models": config.models,
-        "preferences": config.preferences,
-        "web_search_enabled": config.web_search_enabled,
-        "web_search_max_results": config.web_search_max_results,
-    }

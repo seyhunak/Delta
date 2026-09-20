@@ -1,6 +1,6 @@
-# ΔPrompt Baselines Reference Sheet
+# Delta Baselines Reference Sheet
 
-This document defines the **Baseline Behavior (B)** for ΔPrompt. A baseline is the set of assumptions the model operates under before any **Delta (Δ)** is applied.
+This document defines the **Baseline Behavior (B)** for Delta. A baseline is the set of assumptions the model operates under before any **Delta (Δ)** is applied.
 
 By defining a clear baseline, you can minimize instruction length and focus only on deviations.
 
@@ -90,4 +90,4 @@ Once anchored, you only need to use deltas:
 
 ---
 
-*This reference sheet is part of the [ΔPrompt](README.md)
+*This reference sheet is part of the [Delta](README.md)

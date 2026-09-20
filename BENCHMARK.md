@@ -1,14 +1,14 @@
-# ΔPrompt — Benchmarking Difference-Based Prompting and Agentic LLM Behavior
+# Delta — Benchmarking Difference-Based Prompting and Agentic LLM Behavior
 
-ΔPrompt benchmarked for **formally evaluating prompting strategies**, with a focus on **ΔPrompt (difference-based prompting)** and **ΔAgents (difference-driven AI agents)**.
+Delta benchmarked for **formally evaluating prompting strategies**, with a focus on **Delta (difference-based prompting)** and **Delta Agents (difference-driven AI agents)**.
 
-Unlike traditional benchmarks that evaluate *models*, ΔPrompt benchmarked **how instructions are given**—measuring efficiency, quality, iteration cost, and agentic behavior under realistic workflows.
+Unlike traditional benchmarks that evaluate *models*, Delta benchmarked **how instructions are given**—measuring efficiency, quality, iteration cost, and agentic behavior under realistic workflows.
 
 ---
 
 ## ✨ Key Ideas
 
-* **ΔPrompt**: Encode *only what changes* from a model’s default behavior.
+* **Delta**: Encode *only what changes* from a model’s default behavior.
 * **Difference Encoding**: Treat prompts as corrections, not full specifications.
 * **Efficiency First**: Token economy, iteration cost, and human effort matter.
 
@@ -18,13 +18,13 @@ Unlike traditional benchmarks that evaluate *models*, ΔPrompt benchmarked **how
 
 > *If models are smart, prompts should be small.*
 
-ΔPrompt exists to test that hypothesis.
+Delta exists to test that hypothesis.
 
 ---
 
-## 📦 What ΔPrompt Does
+## 📦 What Delta Does
 
-ΔPrompt evaluated prompting methods across **five domains**:
+Delta evaluated prompting methods across **five domains**:
 
 | Domain | Focus                               |
 | ------ | ----------------------------------- |
@@ -39,25 +39,29 @@ Unlike traditional benchmarks that evaluate *models*, ΔPrompt benchmarked **how
 
 ## 🧪 Prompting Regimes Compared
 
-ΔPrompt compared:
+Delta compared:
 
 1. Naive explicit prompting
 2. Role-based prompting
 3. Few-shot prompting
-4. **ΔPrompt (with and without anchors)**
-5. **ΔAgent (agentic variant)**
+4. **Delta (with and without anchors)**
+5. **Delta Agent (agentic variant)**
 
 ---
 
 ## 📊 Core Metrics
 
-### Prompt-Level Metrics
+### Implemented (`dp benchmark`)
 
-* **PES** — Prompt Efficiency Score
-* **IES** — Iterative Efficiency Score
-* **DCR** — Delta Compression Ratio
+* **Latency** — wall-clock per provider (sequential runs)
+* **Token estimates** — prompt/output/total via `estimate_tokens()` (`len // 4` heuristic, labeled `(est.)`)
+* **Lexical overlap** — bag-of-words set-intersection vs the first successful provider (marked `— (ref)`, never scored against itself)
+* **DCR** — Delta Compression Ratio (`delta_compression_ratio()` in `dp/benchmark.py`): estimated naive-prompt tokens ÷ estimated Delta-prompt tokens
 
-### Agent-Specific Metrics
+### Proposed (not yet implemented)
+
+The agent-specific metrics below are design targets, not measured values.
+`dp benchmark` does not score them yet.
 
 * Planning Quality (PQ)
 * Tool Selection Accuracy (TSA)
@@ -69,7 +73,7 @@ Unlike traditional benchmarks that evaluate *models*, ΔPrompt benchmarked **how
 
 ---
 
-## 🧠 Example: ΔPrompt
+## 🧠 Example: Delta
 
 ```text
 Baseline: concise, correct, neutral.
@@ -81,7 +85,7 @@ Only deviations from the baseline are specified.
 
 ---
 
-## 🤖 Example: ΔAgent Prompt
+## 🤖 Example: Delta Agent Prompt
 
 ```text
 Baseline: autonomous, reliable, minimal verbosity.
@@ -94,9 +98,9 @@ Compare top 3 open-source vector databases for production use.
 
 ---
 
-## 🧪 Running ΔPrompt (Conceptual)
+## 🧪 Running Delta (Conceptual)
 
-ΔPrompt is model-agnostic. You can run it with, we tested with:
+Delta is model-agnostic. You can run it with, we tested with:
 
 * X.AI - Grok 4.1
 * OpenAI - GPT-5
@@ -109,7 +113,7 @@ Typical workflow:
 1. Select task set
 2. Apply each prompting regime
 3. Log tokens, tool calls, outputs
-4. Score using ΔPrompt metrics
+4. Score using Delta metrics
 5. Compare efficiency vs quality
 
 ---
@@ -120,13 +124,13 @@ Typical workflow:
 * Human evaluation still necessary for creative tasks
 * Agent scoring assumes transparent tool traces
 
-ΔPrompt evaluates *interaction strategy*, not model truthfulness guarantees.
+Delta evaluates *interaction strategy*, not model truthfulness guarantees.
 
 ---
 
 ## 🔮 Roadmap
 
-* Automated ΔPrompt runner (Python)
+* Automated Delta runner (Python)
 * Agent failure-injection tests
 * Multi-agent benchmarks
 
@@ -135,8 +139,8 @@ Typical workflow:
 ## 📄 Citation (Draft)
 
 ```bibtex
-@misc{deltaprompt2026,
-  title={ΔPrompt: Evaluating Difference-Based Prompting and Agentic LLM Behavior},
+@misc{delta2026,
+  title={Delta: Evaluating Difference-Based Prompting and Agentic LLM Behavior},
   author={Seyhun Akyurek},
   year={2026}
 }

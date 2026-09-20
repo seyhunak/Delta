@@ -1,1 +1,1 @@
-"""Utility tools for DeltaPrompt."""
+"""Utility tools for Delta."""

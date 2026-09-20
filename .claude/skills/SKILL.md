@@ -1,15 +1,15 @@
-# DeltaPrompt Skill for Claude Code
+# Delta Skill for Claude Code
 
-This skill provides specialized commands and workflows for working with the DeltaPrompt project - a difference-based prompting technique for LLMs.
+This skill provides specialized commands and workflows for working with the Delta project - a difference-based prompting technique for LLMs.
 
 ## Overview
 
-DeltaPrompt (ΔPrompt) is a prompting methodology that encodes only the difference between a model's default behavior and the user's desired behavior. Instead of restating full instructions, it treats prompts as corrections.
+Delta is a prompting methodology that encodes only the difference between a model's default behavior and the user's desired behavior. Instead of restating full instructions, it treats prompts as corrections.
 
 **Core concept:**
 - B = model's baseline behavior (implied by pretraining + context)
 - O = desired output
-- ΔPrompt specifies: Δ = O − B
+- Delta specifies: Δ = O − B
 
 **Canonical syntax:** `Δ(goal | constraints | style | output)`
 
@@ -18,19 +18,19 @@ DeltaPrompt (ΔPrompt) is a prompting methodology that encodes only the differen
 To use this skill with Claude Code:
 
 1. Place `SKILL.md` in `.claude/skills/` at your project root
-2. Or use the skill command to load it: `/skill DeltaPrompt`
+2. Or use the skill command to load it: `/skill Delta`
 3. Or download directly:
 
 ```bash
 mkdir -p .claude/skills
-curl -fsSL https://raw.githubusercontent.com/seyhunak/Delta_Prompt/main/SKILL.md -o .claude/skills/SKILL.md
+curl -fsSL https://raw.githubusercontent.com/seyhunak/Delta/main/SKILL.md -o .claude/skills/SKILL.md
 # or
-wget -q https://raw.githubusercontent.com/seyhunak/Delta_Prompt/main/SKILL.md -O .claude/skills/SKILL.md
+wget -q https://raw.githubusercontent.com/seyhunak/Delta/main/SKILL.md -O .claude/skills/SKILL.md
 ```
 
 Once loaded, Claude Code will have access to all the commands and workflows documented in this file.
 
-## DeltaPrompt CLI Installation
+## Delta CLI Installation
 
 ```bash
 python3 -m pip install -e .
@@ -51,13 +51,15 @@ The `dp` command provides the following subcommands:
 - `dp baseline set "..."` - Set baseline behavior
 - `dp delta add "..."` - Add a delta constraint
 - `dp goal set "..."` - Set the goal/task
-- `dp "baseline" "goal" -d "delta1" -d "delta2"` - Set all at once
+- `dp set "baseline" "goal" -d "delta1" -d "delta2"` - Set all at once
 
 ### Execution
 
 - `dp run` - Execute prompt with current session
 - `dp run --provider openai` - Run with specific provider
 - `dp run --model gpt-4` - Override model
+- `dp run --stream` - Stream output tokens live
+- `dp run --temperature 0.7 --max-tokens 1024` - Override sampling params
 - `dp run --web-search` - Enable Tavily web search context
 - `dp run --search-query "custom query"` - Override search query
 

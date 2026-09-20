@@ -30,10 +30,11 @@ async def detect_providers() -> dict[str, ProviderStatus]:
         available=bool(os.getenv("ANTHROPIC_API_KEY")),
         reason="ANTHROPIC_API_KEY" if os.getenv("ANTHROPIC_API_KEY") else "missing ANTHROPIC_API_KEY",
     )
+    ollama_host = os.getenv("OLLAMA_HOST", "localhost:11434")
     ollama_up = await is_ollama_available()
     statuses["ollama"] = ProviderStatus(
         available=ollama_up,
-        reason="localhost:11434 reachable" if ollama_up else "localhost:11434 unreachable",
+        reason=f"{ollama_host} reachable" if ollama_up else f"{ollama_host} unreachable",
     )
     statuses["groq"] = ProviderStatus(
         available=bool(os.getenv("GROQ_API_KEY")),
