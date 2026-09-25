@@ -10,7 +10,7 @@
 ![Optimized](https://img.shields.io/badge/Optimized-success?style=flat-square)
 ![Built for Agents](https://img.shields.io/badge/Built%20for-Agents-red?style=flat-square)
 
-**Delta** is a prompting technique for large language models (LLMs) designed by Crafted for our own internal work method, it encodes **only the difference (Δ)** between a model’s default behavior and the user’s desired behavior.
+**Delta** is a prompting technique for large language models (LLMs) designed for our own internal work method, it encodes **only the difference (Δ)** between a model’s default behavior and the user’s desired behavior.
 
 Instead of restating full instructions, roles, or examples, Delta treats prompts as *corrections*—the way humans naturally communicate with capable collaborators.
 
